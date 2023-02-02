@@ -1,0 +1,35 @@
+server:
+  port: 8080
+
+
+spring:
+  cloud:
+    consul:
+      discovery:
+        instanceId: ${spring.application.name}
+        health-check-interval: 5s
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+      routes:
+      - id: service-a
+        uri: lb://service-a
+        predicates:
+        - Path=/srva/**
+        filters:
+        - RewritePath=/srva/(?<segment>.*), /$\{segment}
+        - name: CircuitBreaker
+          args:
+            name: monitor-srvA
+            fallbackUri: forward:/fallback/serviceA
+      - id: service-b
+        uri: lb://service-b
+        predicates:
+        - Path=/srvb/**
+        filters:
+        - RewritePath=/srvb/(?<segment>.*), /$\{segment}
+        - name: CircuitBreaker
+          args:
+            name: monitor-srvB
+            fallbackUri: forward:/fallback/serviceB
